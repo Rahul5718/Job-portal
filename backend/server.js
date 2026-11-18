@@ -27,12 +27,6 @@ app.use(cors({
   credentials: true
 }))
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  })
-);
 
 // Create required MongoDB collections and indexes
 async function createCollections(db) {
