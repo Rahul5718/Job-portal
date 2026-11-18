@@ -26,7 +26,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }))
-
+app.use(express.json());
 
 // Create required MongoDB collections and indexes
 async function createCollections(db) {
