@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: 'http://job-portal-backend-delta-tan.vercel.app/api',
+    baseURL: 'https://job-portal-backend-delta-tan.vercel.app/api',
     headers: {
         'Content-Type': 'application/json'
     }
