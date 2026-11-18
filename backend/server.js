@@ -11,7 +11,7 @@ app.use(express.json());
 
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.CLIENT_URL,
+  "https://job-portal-frontend-six-mu.vercel.app",
 ].filter(Boolean);
 
 app.use(
