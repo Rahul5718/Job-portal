@@ -8,7 +8,12 @@ const app = express()
 // Middleware
 app.use(express.json())
 
-app.use(cors())
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    process.env.CLIENT_URL
+  ]
+}));
 
 
 app.get('/api/test', (req, res) => {
