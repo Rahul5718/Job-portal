@@ -1,91 +1,130 @@
 
 const express = require("express");
-const { connectDB, getDB } = require("./config/db");
-const cors = require('cors')
+const cors = require("cors");
 
-const app = express()
+const { connectDB, getDB } = require("./config/db");
+
+const app = express();
 
 // Middleware
-app.use(express.json())
+app.use(express.json());
 
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    process.env.CLIENT_URL
-  ]
-}));
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL,
+].filter(Boolean);
 
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 
-app.get('/api/test', (req, res) => {
-    res.json({
-        message: "Backend connected successfully!"
-    });
-});
+// Create required MongoDB collections and indexes
+async function createCollections(db) {
+  const collectionNames = [
+    "users",
+    "opportunities",
+    "applications",
+    "admin",
+    "studentProfiles",
+  ];
 
-app.use("/api/auth", require("./routes/authRoute"))
-
-app.use("/api/opportunities", require("./routes/opportunityRoute"));
-
-app.use("/api/applications", require("./routes/applicationRoute"));
-const studentProfileRoutes = require("./routes/userProfileRoute");
-
-app.use("/api/profile", studentProfileRoutes);
-
-async function createCollections(db){
-     const collectionNames = [
-          "users",
-          "opportunities",
-          "applications",
-          "admin",
-          "userProfile"
-     ]
-
-     for (const name of collectionNames) {
-    const exists = await db.listCollections(
-      { name },
-      { nameOnly: true }
-    ).hasNext();
+  for (const name of collectionNames) {
+    const exists = await db
+      .listCollections({ name }, { nameOnly: true })
+      .hasNext();
 
     if (!exists) {
       await db.createCollection(name);
       console.log(`${name} collection created successfully!`);
-    } else {
-      console.log(`${name} collection already exists.`);
     }
   }
 
-   await db.collection("users").createIndex(
+  await db.collection("users").createIndex(
     { email: 1 },
     { unique: true }
   );
 
-  await db.collection("userProfile").createIndex(
+  await db.collection("studentProfiles").createIndex(
     { userId: 1 },
     { unique: true }
   );
-
 }
 
+// Initialize database only once per server instance
+let dbInitPromise;
 
-const PORT =  process.env.PORT || 5000
+function ensureDatabase() {
+  if (!dbInitPromise) {
+    dbInitPromise = (async () => {
+      await connectDB();
 
-// Start server after database connection
-async function startServer() {
-  try {
-    await connectDB();
+      const db = getDB();
 
-    const db = getDB()
+      await createCollections(db);
 
-    await createCollections(db)
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log("Database initialization completed!");
+    })().catch((error) => {
+      dbInitPromise = null;
+      throw error;
     });
-
-  } catch (error) {
-    console.error("Backend startup failed:", error);
   }
+
+  return dbInitPromise;
 }
 
+// Connect database before processing API requests
+app.use(async (req, res, next) => {
+  try {
+    await ensureDatabase();
+    next();
+  } catch (error) {
+    console.error("Database initialization error:", error);
 
-startServer();
+    return res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+    });
+  }
+});
+
+// Test route
+app.get("/api/test", (req, res) => {
+  res.json({
+    success: true,
+    message: "Backend connected successfully!",
+  });
+});
+
+// API routes
+app.use("/api/auth", require("./routes/authRoute"));
+
+app.use("/api/opportunities", require("./routes/opportunityRoute"));
+
+app.use("/api/applications", require("./routes/applicationRoute"));
+
+app.use(
+  "/api/profile",
+  require("./routes/userProfileRoute")
+);
+
+// Local development
+const PORT = process.env.PORT || 5000;
+
+if (require.main === module) {
+  ensureDatabase()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error("Backend startup failed:", error);
+      process.exit(1);
+    });
+}
+
+// Export Express application for Vercel
+module.exports = app;
