@@ -14,6 +14,19 @@ const allowedOrigins = [
   "https://job-portal-frontend-six-mu.vercel.app",
 ].filter(Boolean);
 
+app.use(cors({
+   origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS: " + origin));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}))
+
 app.use(
   cors({
     origin: allowedOrigins,
