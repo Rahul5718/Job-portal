@@ -140,7 +140,18 @@ If you use Nodemon:
 nodemon server.js
 ```
 
-### 4. Frontend Setup
+### 4. Deploying the Backend to Vercel
+
+In the backend Vercel project's **Settings → Environment Variables**, configure:
+
+- `MONGO_URI`: your MongoDB connection string.
+- `DB_NAME`: your database name (defaults to `opportunityhub`).
+- `JWT_SECRET`: a long, private signing key.
+- `FRONTEND_URL`: the exact deployed frontend origin, such as `https://job-portal-frontend-six-mu.vercel.app` (no trailing slash).
+
+Add these variables to each Vercel environment you deploy to, then redeploy the backend. Ensure the MongoDB Atlas database user and network access settings permit the deployed backend to connect. Check the backend's Vercel function logs for the underlying database error if its API still returns 500.
+
+### 5. Frontend Setup
 
 Open another terminal and navigate to the frontend folder:
 

@@ -1,4 +1,3 @@
-
 const { MongoClient } = require("mongodb");
 const path = require("path");
 
@@ -11,10 +10,9 @@ let database;
 
 async function connectDB() {
   try {
-    const mongoURI = process.env.MONGO_URI || 'mongodb+srv://rahulkatravath03_db_user:Rahull3290@cluster0.0gnueg6.mongodb.net/?retryWrites=true&w=majority';
-    const dbName = process.env.DB_NAME || 'opportunityhub';
+    const mongoURI = process.env.MONGO_URI;
+    const dbName = process.env.DB_NAME || "opportunityhub";
 
-    // Check environment variables
     console.log("Checking MongoDB configuration...");
     console.log("MONGO_URI exists:", Boolean(mongoURI));
     console.log("DB_NAME exists:", Boolean(dbName));
@@ -27,26 +25,20 @@ async function connectDB() {
       throw new Error("DB_NAME is missing");
     }
 
-    // Create MongoDB client once
     if (!client) {
       client = new MongoClient(mongoURI, {
         serverSelectionTimeoutMS: 10000,
       });
     }
 
-    // Connect to MongoDB
     await client.connect();
 
-    // Select database
     database = client.db(dbName);
-
-    // Verify connection
     await database.command({ ping: 1 });
 
     console.log("MongoDB connected successfully!");
 
     return database;
-
   } catch (error) {
     console.error("MongoDB connection failed:", error.message);
     throw error;
@@ -55,9 +47,7 @@ async function connectDB() {
 
 function getDB() {
   if (!database) {
-    throw new Error(
-      "Database is not connected. Call connectDB() first."
-    );
+    throw new Error("Database is not connected. Call connectDB() first.");
   }
 
   return database;
