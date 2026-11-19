@@ -1,29 +1,52 @@
-const { MongoClient } = require('mongodb');
-const path = require('path');
 
-require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
+const { MongoClient } = require("mongodb");
+const path = require("path");
+
+require("dotenv").config({
+  path: path.resolve(__dirname, "..", ".env"),
+});
 
 let client;
 let database;
 
 async function connectDB() {
   try {
-    if (!process.env.MONGO_URI) {
-      throw new Error("Missing MONGO_URI in backend/.env");
+    const mongoURI = process.env.MONGO_URI || 'mongodb+srv://rahulkatravath03_db_user:Rahull3290@cluster0.0gnueg6.mongodb.net/?retryWrites=true&w=majority';
+    const dbName = process.env.DB_NAME || 'opportunityhub';
+
+    // Check environment variables
+    console.log("Checking MongoDB configuration...");
+    console.log("MONGO_URI exists:", Boolean(mongoURI));
+    console.log("DB_NAME exists:", Boolean(dbName));
+
+    if (!mongoURI) {
+      throw new Error("MONGO_URI is missing");
     }
 
-    if (!process.env.DB_NAME) {
-      throw new Error("Missing DB_NAME in backend/.env");
+    if (!dbName) {
+      throw new Error("DB_NAME is missing");
     }
 
-    client = client || new MongoClient(process.env.MONGO_URI);
+    // Create MongoDB client once
+    if (!client) {
+      client = new MongoClient(mongoURI, {
+        serverSelectionTimeoutMS: 10000,
+      });
+    }
+
+    // Connect to MongoDB
     await client.connect();
 
-    database = client.db(process.env.DB_NAME);
+    // Select database
+    database = client.db(dbName);
+
+    // Verify connection
+    await database.command({ ping: 1 });
 
     console.log("MongoDB connected successfully!");
 
     return database;
+
   } catch (error) {
     console.error("MongoDB connection failed:", error.message);
     throw error;
@@ -32,11 +55,15 @@ async function connectDB() {
 
 function getDB() {
   if (!database) {
-    throw new Error("Database is not connected. Call connectDB() first.");
+    throw new Error(
+      "Database is not connected. Call connectDB() first."
+    );
   }
 
   return database;
 }
 
-
-module.exports = { connectDB , getDB }
+module.exports = {
+  connectDB,
+  getDB,
+};
