@@ -14,19 +14,22 @@ const allowedOrigins = [
   "https://job-portal-frontend-six-mu.vercel.app",
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
    origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      return callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS: " + origin));
+     return callback(new Error("Not allowed by CORS: " + origin));
     }
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
-}))
+}
+
+app.use(cors(corsOptions))
 app.use(express.json());
+
 
 // Create required MongoDB collections and indexes
 async function createCollections(db) {
@@ -61,7 +64,7 @@ async function createCollections(db) {
 }
 
 // Initialize database only once per server instance
-let dbInitPromise;
+let dbInitPromise = null;
 
 function ensureDatabase() {
   if (!dbInitPromise) {
@@ -99,7 +102,7 @@ app.use(async (req, res, next) => {
 
 // Test route
 app.get("/api/test", (req, res) => {
-  res.json({
+  res.status(200).json({
     success: true,
     message: "Backend connected successfully!",
   });
