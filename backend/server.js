@@ -6,9 +6,6 @@ const { connectDB, getDB } = require("./config/db");
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-
 const allowedOrigins = [
   "http://localhost:5173",
   "https://job-portal-frontend-six-mu.vercel.app",
@@ -27,9 +24,8 @@ const corsOptions = {
   credentials: true
 }
 
-app.use(cors(corsOptions))
 app.use(express.json());
-
+app.use(cors(corsOptions))
 
 // Create required MongoDB collections and indexes
 async function createCollections(db) {
