@@ -6,17 +6,20 @@ const { connectDB, getDB } = require("./config/db");
 
 const app = express();
 
+const clean = (u) => (u ? u.replace(/\/$/, "") : u);
+
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_URL || "https://job-portal-frontend-six-mu.vercel.app",
+  clean(process.env.FRONTEND_URL),
+  "https://job-portal-frontend-six-mu.vercel.app",
 ].filter(Boolean);
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+  origin:(origin, callback) =>{
+    if (!origin || allowedOrigins.includes(clean(origin))) {
       return callback(null, true);
     }
-    return callback(new Error("Not allowed by CORS: " + origin));
+    return callback(null,false);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -24,6 +27,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions))
 app.use(express.json());
 
 // Create required MongoDB collections and indexes
