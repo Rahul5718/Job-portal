@@ -164,35 +164,51 @@ const [profile, setProfile] = useState(emptyProfile);
 
 // Load only the logged-in candidate's profile.
 useEffect(() => {
+  let isMounted = true;
+
   const loadProfile = async () => {
     try {
       const response = await API.get("/profile/me");
 
-      if (response.data.profile) {
-        setProfile({
-          ...emptyProfile,
-          ...response.data.profile,
-        });
-      } else {
-        // First-time student: fill account details
-        setProfile({
-          ...emptyProfile,
-          name: user?.name || "",
-          email: user?.email || "",
-        });
-      }
+      if (!isMounted) return;
+
+      const savedProfile = response.data?.profile || {};
+
+      setProfile({
+        ...emptyProfile,
+        ...savedProfile,
+
+        // Always fall back to the logged-in account details
+        // if the saved profile does not contain them.
+        name: savedProfile.name || user?.name || "",
+        email: savedProfile.email || user?.email || "",
+      });
     } catch (error) {
       console.error("Profile loading error:", error);
 
+      if (!isMounted) return;
+
+      // Still show the account name and email if profile loading fails.
+      setProfile({
+        ...emptyProfile,
+        name: user?.name || "",
+        email: user?.email || "",
+      });
+
       setApplicationMessage(
-        error.response?.data?.message ||
-        "Could not load your profile."
+        error.response?.data?.message || "Could not load your profile."
       );
     }
   };
 
-  loadProfile();
-}, [user?._id, user?.id, user?.userId, user?.name, user?.email]);
+  if (userId) {
+    loadProfile();
+  }
+
+  return () => {
+    isMounted = false;
+  };
+}, [userId, user?.name, user?.email]);
 
   const domains = [
     "All Domains",
@@ -264,8 +280,15 @@ const saveProfile = async (event) => {
   event.preventDefault();
 
   try {
-    await API.put("/profile/me", profile);
+    const response = await API.put("/profile/me", profile);
+     const savedProfile = response.data?.profile || profile;
 
+    setProfile({
+      ...emptyProfile,
+      ...savedProfile,
+      name: savedProfile.name || user?.name || "",
+      email: savedProfile.email || user?.email || "",
+    });
     setApplicationMessage(
       "Your profile has been saved successfully."
     );
@@ -350,6 +373,30 @@ const applyToOpportunity = async (item) => {
     setActivePage(page);
     setSelected(null);
   };
+const profileFields = [
+  "name",
+  "email",
+  "phone",
+  "college",
+  "university",
+  "degree",
+  "graduationYear",
+  "tenthMarks",
+  "twelfthMarks",
+  "graduationMarks",
+  "preferredJob",
+  "preferredLocation",
+  "resumeLink",
+];
+
+const completedFields = profileFields.filter((field) =>
+  String(profile[field] ?? "").trim()
+).length;
+
+const profileCompletion = Math.round(
+  (completedFields / profileFields.length) * 100
+);
+  
 
   return (
     <div className="w-full min-h-screen bg-slate-50 text-slate-800">
@@ -496,19 +543,8 @@ const applyToOpportunity = async (item) => {
                   />
                   <StatCard
                     title="Profile completion"
-                    value={`${Math.round(
-                      ([
-                        "name",
-                        "email",
-                        "college",
-                        "university",
-                        "degree",
-                        "graduationYear",
-                      ].filter((key) => profile[key]?.trim()).length /
-                        6) *
-                        100
-                    )}%`}
-                    subtitle="Based on essential profile fields"
+                    value={`${profileCompletion}%`}
+                    subtitle={`${completedFields} of ${profileFields.length} fields completed`}
                     icon={UserRound}
                   />
                 </section>
