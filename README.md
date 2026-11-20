@@ -124,6 +124,13 @@ PORT=5000
 MONGO_URI=your_mongodb_connection_string
 DB_NAME=your_database_name
 JWT_SECRET=your_secret_key
+
+<!-- In that you must add your admin details like. -->
+ADMIN_1_NAME=your admin name
+ADMIN_1_EMAIL= your admin email
+ADMIN_1_PASSWORD= your admin password
+
+ADMIN_2_NAME=....
 ```
 
 Add any other environment variables required by your backend configuration.
