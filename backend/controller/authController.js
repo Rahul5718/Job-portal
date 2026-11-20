@@ -90,7 +90,6 @@ exports.loginUser = async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // First check the admin collection
     const admin = await Admin.findByEmail(normalizedEmail);
 
     if (admin) {
@@ -106,7 +105,9 @@ exports.loginUser = async (req, res) => {
       }
 
       const token = jwt.sign(
-        { userId: admin.id, role: "admin" },
+        { userId: admin.id,
+          role: "admin" 
+        },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
       );
