@@ -243,7 +243,7 @@ const handleAuthSubmit = async (formData) => {
                 </p>
               ) : featuredOpportunities.length > 0 ? (
                 <div className="grid gap-5 mt-10 md:grid-cols-3">
-                  {featuredOpportunities.slice(0, 6).map((item) => (
+                  {featuredOpportunities.slice(0, 3).map((item) => (
                     <OpportunityCard
                       key={item.id}
                       opportunity={item}
