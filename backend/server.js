@@ -6,12 +6,14 @@ const { connectDB, getDB } = require("./config/db");
 
 const app = express();
 
-const clean = (u) => (u ? u.replace(/\/$/, "") : u);
+const clean = (u) => (u ? u.trim().replace(/\/$/, "") : "");
 
 const allowedOrigins = [
-  "http://localhost:5173",
-  clean(process.env.FRONTEND_URL),
+ "http://localhost:5173",
+  "http://localhost:3000",
   "https://job-portal-frontend-six-mu.vercel.app",
+  "https://job-portal-frontend-4aov6469y-rathod-dev.vercel.app",
+  ...(process.env.FRONTEND_URL||"").split(",").map(clean),
 ].filter(Boolean);
 
 const corsOptions = {
@@ -19,6 +21,7 @@ const corsOptions = {
     if (!origin || allowedOrigins.includes(clean(origin))) {
       return callback(null, true);
     }
+    console.log("Blocked CORS origin:", origin);
     return callback(null,false);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -29,6 +32,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Create required MongoDB collections and indexes
 async function createCollections(db) {
@@ -119,13 +123,38 @@ app.use(
   require("./routes/userProfileRoute")
 );
 
+// HANDLE UNKNOWN ROUTES
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
+// Global error handling
+app.use((error, req, res, next) => {
+  console.error("Server error:", error);
+
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  res.status(error.status || 500).json({
+    success: false,
+    message: "Internal server error",
+  });
+});
+
+
+
 // Local development
 const PORT = process.env.PORT || 5000;
 
 if (require.main === module) {
   ensureDatabase()
     .then(() => {
-      app.listen(PORT, () => {
+      app.listen(PORT, "0.0.0.0", () => {
         console.log(`Server running on port ${PORT}`);
       });
     })
